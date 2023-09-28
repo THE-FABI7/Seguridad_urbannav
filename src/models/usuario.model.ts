@@ -1,4 +1,10 @@
-import {Entity, model, property, hasMany, belongsTo} from '@loopback/repository';
+import {
+  Entity,
+  model,
+  property,
+  hasMany,
+  belongsTo,
+} from '@loopback/repository';
 import {Login} from './login.model';
 import {Rol} from './rol.model';
 
@@ -25,15 +31,13 @@ export class Usuario extends Entity {
 
   @property({
     type: 'string',
-    required: true,
   })
-  Foto: string;
+  Foto?: string;
 
   @property({
     type: 'string',
-    required: true,
   })
-  Clave: string;
+  Clave?: string;
 
   @property({
     type: 'string',
