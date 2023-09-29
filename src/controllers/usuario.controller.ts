@@ -1,3 +1,4 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -7,25 +8,32 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  HttpErrors,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
-import {Usuario} from '../models';
-import {UsuarioRepository} from '../repositories';
-import {service} from '@loopback/core';
+import {
+  Credenciales,
+  FactorDeAutenticacionPorCodigo,
+  Login,
+  Usuario,
+} from '../models';
+import {LoginRepository, UsuarioRepository} from '../repositories';
 import {SeguridadUsuarioService} from '../services';
 
 export class UsuarioController {
   constructor(
     @repository(UsuarioRepository)
     public usuarioRepository: UsuarioRepository,
+    @repository(LoginRepository)
+    public repositorioLogin: LoginRepository,
     @service(SeguridadUsuarioService)
     public servicioSeguridad: SeguridadUsuarioService,
   ) {}
@@ -49,7 +57,7 @@ export class UsuarioController {
     usuario: Omit<Usuario, '_id'>,
   ): Promise<Usuario> {
     //crear clave
-    let clave = this.servicioSeguridad.GenerarClaveAleatoria();
+    let clave = this.servicioSeguridad.GeneralTextoAleatorio(8);
     //cifrar la clave
     let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
     //Asignar clave cifrada al usuario
@@ -156,5 +164,93 @@ export class UsuarioController {
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.usuarioRepository.deleteById(id);
+  }
+
+  // Metodos personalizados para la API
+
+  //metodo para identificar un usaruio
+  @post('/identificar-usuario')
+  @response(200, {
+    description: 'Usuario model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
+  })
+  async identificarUsuario(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Credenciales),
+        },
+      },
+    })
+    credenciales: Credenciales,
+  ): Promise<object> {
+    let usuario = await this.servicioSeguridad.identificarUsuario(credenciales);
+    if (usuario) {
+      let codigo2fa = this.servicioSeguridad.GeneralTextoAleatorio(5);
+      let login: Login = new Login();
+
+      login.usuarioId = usuario._id!;
+      login.Codigo2FA = codigo2fa;
+      login.EstadoCodigo2Fa = false;
+      login.Token = '';
+      login.EstadoToken = false;
+      this.repositorioLogin.create(login);
+      usuario.Clave = '';
+
+      return usuario;
+    }
+    return new HttpErrors[401]('credenciales incorrectas');
+  }
+
+  /* El método `verificarCodigo2FA` es un punto final POST que verifica el código
+  de autenticación de dos factores proporcionado por el usuario. Toma un cuerpo
+  de solicitud que contiene el modelo `FactorDeAutenticacionPorCodigo`, que
+  representa el código de autenticación ingresado por el usuario. */
+  @post('/verificar-codigo2fa')
+  @response(200, {
+    description: 'Usuario model instance',
+    content: {
+      'application/json': {
+        schema: getModelSchemaRef(FactorDeAutenticacionPorCodigo),
+      },
+    },
+  })
+  async verificarCodigo2FA(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(FactorDeAutenticacionPorCodigo),
+        },
+      },
+    })
+    credenciales: FactorDeAutenticacionPorCodigo,
+  ): Promise<object> {
+    let usuario = await this.servicioSeguridad.validarCodigo2fa(credenciales);
+    if (usuario) {
+      let token = this.servicioSeguridad.crerarToken(usuario);
+      if (usuario) {
+        usuario.Clave = '';
+        try {
+          this.usuarioRepository.logins(usuario._id).patch(
+            {
+              EstadoCodigo2Fa: true,
+              Token: token,
+            },
+            {
+              EstadoCodigo2Fa: false,
+            },
+          );
+        } catch {
+          console.log(
+            'No se han almacenado cambios del estado del token en la base de datos',
+          );
+        }
+        return {
+          user: usuario,
+          token: token,
+        };
+      }
+    }
+    return new HttpErrors[401]('credenciales incorrectas');
   }
 }

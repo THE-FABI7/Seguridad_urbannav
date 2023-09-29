@@ -20,13 +20,12 @@ export class Login extends Entity {
     type: 'string',
     required: true,
   })
-  EstadoCodigo2Fa: string;
+  EstadoCodigo2Fa: boolean;
 
   @property({
     type: 'string',
-    required: true,
   })
-  Token: string;
+  Token?: string;
 
   @property({
     type: 'boolean',
