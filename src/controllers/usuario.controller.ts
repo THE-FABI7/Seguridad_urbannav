@@ -1,3 +1,4 @@
+import {authenticate} from '@loopback/authentication';
 import {service} from '@loopback/core';
 import {
   Count,
@@ -19,6 +20,7 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {configuracionSeguridad} from '../config/seguridad.config';
 import {
   Credenciales,
   FactorDeAutenticacionPorCodigo,
@@ -36,7 +38,7 @@ export class UsuarioController {
     public repositorioLogin: LoginRepository,
     @service(SeguridadUsuarioService)
     public servicioSeguridad: SeguridadUsuarioService,
-  ) {}
+  ) { }
 
   @post('/usuario')
   @response(200, {
@@ -75,6 +77,10 @@ export class UsuarioController {
     return this.usuarioRepository.count(where);
   }
 
+  @authenticate({
+    strategy: "auth",
+    options: [configuracionSeguridad.menuUsuarioId, configuracionSeguridad.listarAccion]
+  })
   @get('/usuario')
   @response(200, {
     description: 'Array of Usuario model instances',
