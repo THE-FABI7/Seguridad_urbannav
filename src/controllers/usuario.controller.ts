@@ -1,3 +1,4 @@
+import {authenticate} from '@loopback/authentication';
 import {service} from '@loopback/core';
 import {
   Count,
@@ -19,6 +20,8 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {configuracionNotificaciones} from '../config/notificaciones.config';
+import {configuracionSeguridad} from '../config/seguridad.config';
 import {
   Credenciales,
   FactorDeAutenticacionPorCodigo,
@@ -27,7 +30,6 @@ import {
 } from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
 import {NotificacionesService, SeguridadUsuarioService} from '../services';
-import {configuracionNotificaciones} from '../config/notificaciones.config';
 
 export class UsuarioController {
   constructor(
@@ -79,11 +81,10 @@ export class UsuarioController {
       let url = configuracionNotificaciones.urlBienvenida;
       try {
         this.servicioNotificaciones.EnviarNotificacion(datos, url);
-        console.log("Mensaje aceptado")
+        console.log('Mensaje aceptado');
       } catch (error) {
-         console.log("error")
+        console.log('error');
       }
-
     } catch (error) {
       console.log(error);
     }
@@ -100,6 +101,13 @@ export class UsuarioController {
     return this.usuarioRepository.count(where);
   }
 
+  @authenticate({
+    strategy: 'auth',
+    options: [
+      configuracionSeguridad.menuUsuarioId,
+      configuracionSeguridad.listarAccion,
+    ],
+  })
   @get('/usuario')
   @response(200, {
     description: 'Array of Usuario model instances',
