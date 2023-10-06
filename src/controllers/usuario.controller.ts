@@ -26,7 +26,8 @@ import {
   Usuario,
 } from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
-import {SeguridadUsuarioService} from '../services';
+import {NotificacionesService, SeguridadUsuarioService} from '../services';
+import {configuracionNotificaciones} from '../config/notificaciones.config';
 
 export class UsuarioController {
   constructor(
@@ -36,6 +37,8 @@ export class UsuarioController {
     public repositorioLogin: LoginRepository,
     @service(SeguridadUsuarioService)
     public servicioSeguridad: SeguridadUsuarioService,
+    @service(NotificacionesService)
+    public servicioNotificaciones: NotificacionesService,
   ) {}
 
   @post('/usuario')
@@ -62,6 +65,28 @@ export class UsuarioController {
     let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
     //Asignar clave cifrada al usuario
     usuario.Clave = claveCifrada;
+
+    //Notificar de la creacion de cuenta via correo electronico
+    try {
+      let datos = {
+        correoDestino: usuario.correo,
+        nombreDestino: usuario.Nombre,
+
+        asuntoCorreo: configuracionNotificaciones.Bienvenidos,
+        contenidoCorreo: 'a',
+      };
+
+      let url = configuracionNotificaciones.urlBienvenida;
+      try {
+        this.servicioNotificaciones.EnviarNotificacion(datos, url);
+        console.log("Mensaje aceptado")
+      } catch (error) {
+         console.log("error")
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
 
     return this.usuarioRepository.create(usuario);
   }
@@ -196,6 +221,26 @@ export class UsuarioController {
       login.EstadoToken = false;
       this.repositorioLogin.create(login);
       usuario.Clave = '';
+
+      //enviar el codigo de verificacion via correo
+      try {
+        let datos = {
+          correoDestino: usuario.correo,
+          nombreDestino: usuario.Nombre,
+          codigo2fa: codigo2fa,
+          asuntoCorreo: configuracionNotificaciones.codigo2fa,
+          contenidoCorreo: `${codigo2fa}`,
+        };
+
+        let url = configuracionNotificaciones.urlBienvenida;
+        try {
+          this.servicioNotificaciones.EnviarNotificacion(datos, url);
+        } catch (error) {
+          console.log(error);
+        }
+      } catch (error) {
+        console.log(error);
+      }
 
       return usuario;
     }
