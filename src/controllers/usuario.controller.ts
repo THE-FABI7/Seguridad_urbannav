@@ -26,6 +26,7 @@ import {
   Credenciales,
   FactorDeAutenticacionPorCodigo,
   Login,
+  RecuperarClave,
   Usuario,
 } from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
@@ -201,7 +202,11 @@ export class UsuarioController {
 
   // Metodos personalizados para la API
 
-  //metodo para identificar un usaruio
+/* El método `identificarUsuario` es un punto final POST que se utiliza para
+identificar a un usuario en función de sus credenciales. Toma un cuerpo de
+solicitud que contiene el modelo `Credenciales`, que representa las credenciales
+del usuario. */
+
   @post('/identificar-usuario')
   @response(200, {
     description: 'Usuario model instance',
@@ -303,6 +308,58 @@ export class UsuarioController {
           token: token,
         };
       }
+    }
+    return new HttpErrors[401]('credenciales incorrectas');
+  }
+
+
+ /* El método `RecuperarClave` es un endpoint POST que permite al usuario
+ recuperar su contraseña. Se necesita un cuerpo de solicitud que contiene el
+ modelo `RecuperarClave`, que representa la dirección de correo electrónico del
+ usuario. */
+  @post('/recuperar-clave')
+  @response(200, {
+    description: 'Usuario model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
+  })
+  async RecuperarClave(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(RecuperarClave),
+        },
+      },
+    })
+    credenciales: RecuperarClave,
+  ): Promise<object> {
+    let usuario = await this.usuarioRepository.findOne({
+      where: {
+        correo: credenciales.correo,
+      },
+    });
+    if (usuario) {
+      let clave = this.servicioSeguridad.GeneralTextoAleatorio(8);
+      let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
+      usuario.Clave = claveCifrada;
+      this.usuarioRepository.updateById(usuario._id!, usuario);
+      //enviar la clave via correo
+      try {
+        let datos = {
+          numeroDestino: usuario.Telefono,
+          contenidoMensaje: `Hola ${usuario.Nombre}, Su nueva clave es: ${clave}`,
+        };
+        console.log(datos);
+
+        let url = configuracionNotificaciones.urlNotificacionSms;
+        try {
+          this.servicioNotificaciones.EnviarNotificacion(datos, url);
+        } catch (error) {
+          console.log(error);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+      return usuario;
     }
     return new HttpErrors[401]('credenciales incorrectas');
   }

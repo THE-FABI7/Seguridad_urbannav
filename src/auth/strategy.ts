@@ -1,4 +1,8 @@
-import {AuthenticationBindings, AuthenticationMetadata, AuthenticationStrategy} from '@loopback/authentication';
+import {
+  AuthenticationBindings,
+  AuthenticationMetadata,
+  AuthenticationStrategy,
+} from '@loopback/authentication';
 import {inject, service} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {HttpErrors, Request} from '@loopback/rest';
@@ -6,7 +10,6 @@ import {UserProfile} from '@loopback/security';
 import parseBearerToken from 'parse-bearer-token';
 import {RolMenuRepository} from '../repositories';
 import {SeguridadUsuarioService} from '../services';
-
 
 export class AuthStrategy implements AuthenticationStrategy {
   name: string = 'auth';
@@ -17,8 +20,8 @@ export class AuthStrategy implements AuthenticationStrategy {
     @inject(AuthenticationBindings.METADATA)
     private metadata: AuthenticationMetadata[],
     @repository(RolMenuRepository)
-    private repositorioRolMenu: RolMenuRepository
-  ) { }
+    private repositorioRolMenu: RolMenuRepository,
+  ) {}
 
   /**
    * Atenticación deun usuario frente a una acción en la base de datos.
@@ -35,42 +38,48 @@ export class AuthStrategy implements AuthenticationStrategy {
       let permiso = await this.repositorioRolMenu.findOne({
         where: {
           rolId: idRol,
-          menuId: idMenu
-        }
+          menuId: idMenu,
+        },
       });
       let continuar: boolean = false;
       if (permiso) {
         switch (accion) {
-          case "guardar":
+          case 'guardar':
             continuar = permiso.Guardar;
             break;
-          case "editar":
+          case 'editar':
             continuar = permiso.Editar;
             break;
-          case "eliminar":
+          case 'eliminar':
             continuar = permiso.Eliminar;
             break;
-          case "listar":
+          case 'listar':
             continuar = permiso.Listar;
             break;
-          case "descargar":
+          case 'descargar':
             continuar = permiso.Descargar;
             break;
           default:
-            throw new HttpErrors[401]("No es posible realizar la acción porque no existe");
+            throw new HttpErrors[401](
+              'No es posible realizar la acción porque no existe',
+            );
         }
         if (continuar) {
           let perfil: UserProfile = Object.assign({
-            permitido: "OK"
+            permitido: 'OK',
           });
           return perfil;
         } else {
           return undefined;
         }
       } else {
-        throw new HttpErrors[401]("No tiene permisos para realizar esta acción");
+        throw new HttpErrors[401](
+          'No tiene permisos para realizar esta acción',
+        );
       }
     }
-    throw new HttpErrors[401]("No es posible realizar esta acción por falta de un token");
+    throw new HttpErrors[401](
+      'No es posible realizar esta acción por falta de un token',
+    );
   }
 }

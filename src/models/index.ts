@@ -5,3 +5,4 @@ export * from './login.model';
 export * from './rol-menu.model';
 export * from './credenciales.model';
 export * from './factor-de-autenticacion-por-codigo.model';
+export * from './recuperar-clave.model';
