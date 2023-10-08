@@ -26,11 +26,13 @@ import {
   Credenciales,
   FactorDeAutenticacionPorCodigo,
   Login,
+  PermisosRolMenu,
   RecuperarClave,
   Usuario,
 } from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
-import {NotificacionesService, SeguridadUsuarioService} from '../services';
+import {AuthService, NotificacionesService, SeguridadUsuarioService} from '../services';
+import {UserProfile} from '@loopback/security';
 
 export class UsuarioController {
   constructor(
@@ -42,6 +44,8 @@ export class UsuarioController {
     public servicioSeguridad: SeguridadUsuarioService,
     @service(NotificacionesService)
     public servicioNotificaciones: NotificacionesService,
+    @service(AuthService)
+    private servicioAuth: AuthService,
   ) {}
 
   @post('/usuario')
@@ -258,6 +262,24 @@ del usuario. */
       return usuario;
     }
     return new HttpErrors[401]('credenciales incorrectas');
+  }
+
+  @post('/validar-permiso')
+  @response(200, {
+    description: 'Validacion de permisos de usuario para logica de negocio',
+    content: {'application/json': {schema: getModelSchemaRef(PermisosRolMenu)}},
+  })
+  async ValidarPermidosDeUsuario(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(PermisosRolMenu),
+        },
+      },
+    })
+    datos: PermisosRolMenu,
+  ): Promise<UserProfile | undefined> {
+    return this.servicioAuth.VerificarPermisoDeUsuarioPorRol(datos.idRol, datos.idMenu, datos.accion);
   }
 
   /* El método `verificarCodigo2FA` es un punto final POST que verifica el código
