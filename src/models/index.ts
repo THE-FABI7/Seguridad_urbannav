@@ -7,3 +7,5 @@ export * from './credenciales.model';
 export * from './factor-de-autenticacion-por-codigo.model';
 export * from './recuperar-clave.model';
 export * from './permisos-rol-menu.model';
+export * from './pqrs.model';
+export * from './variables-general-del-sistema.model';

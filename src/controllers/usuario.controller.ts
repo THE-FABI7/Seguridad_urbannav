@@ -31,7 +31,11 @@ import {
   Usuario,
 } from '../models';
 import {LoginRepository, UsuarioRepository} from '../repositories';
-import {AuthService, NotificacionesService, SeguridadUsuarioService} from '../services';
+import {
+  AuthService,
+  NotificacionesService,
+  SeguridadUsuarioService,
+} from '../services';
 import {UserProfile} from '@loopback/security';
 
 export class UsuarioController {
@@ -206,7 +210,7 @@ export class UsuarioController {
 
   // Metodos personalizados para la API
 
-/* El método `identificarUsuario` es un punto final POST que se utiliza para
+  /* El método `identificarUsuario` es un punto final POST que se utiliza para
 identificar a un usuario en función de sus credenciales. Toma un cuerpo de
 solicitud que contiene el modelo `Credenciales`, que representa las credenciales
 del usuario. */
@@ -249,7 +253,7 @@ del usuario. */
           contenidoCorreo: `${codigo2fa}`,
         };
 
-        let url = configuracionNotificaciones.urlBienvenida;
+        let url = configuracionNotificaciones.url2fa;
         try {
           this.servicioNotificaciones.EnviarNotificacion(datos, url);
         } catch (error) {
@@ -280,7 +284,11 @@ del usuario. */
     datos: PermisosRolMenu,
   ): Promise<UserProfile | undefined> {
     let idRol = this.servicioSeguridad.obtenerRolDesdeToken(datos.token);
-    return this.servicioAuth.VerificarPermisoDeUsuarioPorRol(idRol, datos.idMenu, datos.accion);
+    return this.servicioAuth.VerificarPermisoDeUsuarioPorRol(
+      idRol,
+      datos.idMenu,
+      datos.accion,
+    );
   }
 
   /* El método `verificarCodigo2FA` es un punto final POST que verifica el código
@@ -335,8 +343,7 @@ del usuario. */
     return new HttpErrors[401]('credenciales incorrectas');
   }
 
-
- /* El método `RecuperarClave` es un endpoint POST que permite al usuario
+  /* El método `RecuperarClave` es un endpoint POST que permite al usuario
  recuperar su contraseña. Se necesita un cuerpo de solicitud que contiene el
  modelo `RecuperarClave`, que representa la dirección de correo electrónico del
  usuario. */

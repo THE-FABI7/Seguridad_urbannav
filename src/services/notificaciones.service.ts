@@ -10,6 +10,7 @@ export class NotificacionesService {
       await axios.post(url, datos, {
         headers: {'Content-Type': 'application/json'},
       });
+      console.log("Mensaje enviado con exito")
       return true;
     } catch (error) {
       console.error(`Error al enviar notificación: ${error.message}`);

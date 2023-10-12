@@ -10,3 +10,5 @@ export * from './rol.controller';
 export * from './login.controller';
 export * from './menu.controller';
 export * from './permisos.controller';
+export * from './pqrs.controller';
+export * from './variables.controller';
