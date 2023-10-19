@@ -1,12 +1,12 @@
 // Uncomment these imports to begin using these cool features!
 
-import {repository} from '@loopback/repository';
-import {VariablesGeneralDelSistemaRepository} from '../repositories';
 import {service} from '@loopback/core';
-import {NotificacionesService} from '../services';
+import {repository} from '@loopback/repository';
 import {HttpErrors, getModelSchemaRef, post, requestBody, response} from '@loopback/rest';
-import {Pqrs, VariablesGeneralDelSistema} from '../models';
 import {configuracionNotificaciones} from '../config/notificaciones.config';
+import {Pqrs, VariablesGeneralDelSistema} from '../models';
+import {VariablesGeneralDelSistemaRepository} from '../repositories';
+import {NotificacionesService} from '../services';
 
 // import {inject} from '@loopback/core';
 
@@ -16,7 +16,7 @@ export class PqrsController {
     private variablesRepository: VariablesGeneralDelSistemaRepository,
     @service(NotificacionesService)
     private servicioNotificaciones: NotificacionesService,
-  ) {}
+  ) { }
 
   @post('/enviar-mensaje-formulario-contacto')
   @response(200, {
@@ -63,6 +63,16 @@ export class PqrsController {
       equipo tecnico.
       `;
 
+      let mensajeUsuario = `Estimado ${datos.nombreCompleto}, se ha registrado tu PQRS desde el sitio web con la siguiente informacion:\n
+      Nombre: ${datos.nombreCompleto} \n
+      Correo: ${datos.correo} \n
+      Celular: ${datos.celular} \n
+      Tipo de mensaje: ${datos.tipoMensaje} \n
+      texto del mensaje: ${datos.mensaje} \n
+
+      hasta pronto,\n
+      equipo tecnico.
+      `;
       let datosContacto = {
         correoDestino: correoAdministrador,
         nombreDestino: nombreAdministrador,
@@ -70,11 +80,24 @@ export class PqrsController {
         contenidoCorreo: mensaje,
       };
 
+      let datosContactoUsuario = {
+        correoDestino: datos.correo,
+        nombreDestino: datos.nombreCompleto,
+        asuntoCorreo: "Registro PQRS exitoso",
+        contenidoCorreo: mensajeUsuario,
+      };
+
       let enviado = this.servicioNotificaciones.EnviarNotificacion(
         datosContacto,
         configuracionNotificaciones.urlFormularioContacto
       );
       console.log(enviado);
+
+      let enviadoUsuario = this.servicioNotificaciones.EnviarNotificacion(
+        datosContactoUsuario,
+        configuracionNotificaciones.urlFormularioContacto
+      );
+      console.log(enviadoUsuario);
 
       return true;
     } catch (e) {
