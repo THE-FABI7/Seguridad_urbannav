@@ -20,6 +20,7 @@ import {
 } from '@loopback/rest';
 import {VariablesGeneralDelSistema} from '../models';
 import {VariablesGeneralDelSistemaRepository} from '../repositories';
+import {configuracionSeguridad} from '../config/seguridad.config';
 // import {authorize} from '@loopback/authorization';
 
 export class VariablesController {
@@ -53,9 +54,29 @@ export class VariablesController {
     })
     variablesGeneralDelSistema: Omit<VariablesGeneralDelSistema, 'id'>,
   ): Promise<VariablesGeneralDelSistema> {
-    return this.variablesGeneralDelSistemaRepository.create(
-      variablesGeneralDelSistema,
-    );
+    // Verificar si ya existe un registro con el mismo ID
+    const existingRecord =
+      await this.variablesGeneralDelSistemaRepository.findOne({
+        where: {_id: variablesGeneralDelSistema._id},
+      });
+
+    if (existingRecord) {
+      // Si existe, actualiza el registro
+      await this.variablesGeneralDelSistemaRepository.updateById(
+        existingRecord._id,
+        variablesGeneralDelSistema,
+      );
+
+      // Obtener el registro actualizado
+      return this.variablesGeneralDelSistemaRepository.findById(
+        existingRecord._id,
+      );
+    } else {
+      // Si no existe, crea un nuevo registro
+      return this.variablesGeneralDelSistemaRepository.create(
+        variablesGeneralDelSistema,
+      );
+    }
   }
 
   @get('/variables-general-del-sistemas/count')
@@ -70,6 +91,13 @@ export class VariablesController {
     return this.variablesGeneralDelSistemaRepository.count(where);
   }
 
+  @authenticate({
+    strategy: 'auth',
+    options: [
+      configuracionSeguridad.menuUsuarioId,
+      configuracionSeguridad.listarAccion,
+    ],
+  })
   @get('/variables-general-del-sistemas')
   @response(200, {
     description: 'Array of VariablesGeneralDelSistema model instances',

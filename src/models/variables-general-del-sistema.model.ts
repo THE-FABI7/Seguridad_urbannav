@@ -16,6 +16,12 @@ export class VariablesGeneralDelSistema extends Entity {
   PorcentajeGanancia: number;
 
   @property({
+    type: 'number',
+    required: true,
+  })
+  valorporKilometro: number;
+
+  @property({
     type: 'string',
     required: true,
   })
