@@ -1,12 +1,17 @@
-import { /* inject, */ BindingScope, injectable} from '@loopback/core';
+import {/* inject, */ BindingScope, injectable} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {configuracionSeguridad} from '../config/seguridad.config';
 import {
   Credenciales,
   FactorDeAutenticacionPorCodigo,
-  Usuario
+  RolMenu,
+  Usuario,
 } from '../models';
-import {LoginRepository, UsuarioRepository} from '../repositories';
+import {
+  LoginRepository,
+  RolMenuRepository,
+  UsuarioRepository,
+} from '../repositories';
 const MD5 = require('crypto-js/MD5');
 const jwt = require('jsonwebtoken');
 
@@ -17,7 +22,9 @@ export class SeguridadUsuarioService {
     public repositoriUsuario: UsuarioRepository,
     @repository(LoginRepository)
     public repositoriLogin: LoginRepository,
-  ) { }
+    @repository(RolMenuRepository)
+    public repositoryRolMenu: RolMenuRepository,
+  ) {}
 
   /*
    * Add service methods here
@@ -124,5 +131,15 @@ export class SeguridadUsuarioService {
   obtenerRolDesdeToken(tk: string): string {
     let obj = jwt.verify(tk, configuracionSeguridad.clavejwt);
     return obj.role;
+  }
+
+  async ConsultarPermisosDeMenuPorUsuario(idRol: string): Promise<RolMenu[]> {
+    let menu: RolMenu[] = await this.repositoryRolMenu.find({
+      where: {
+        Listar: true,
+        rolId: idRol,
+      },
+    });
+    return menu;
   }
 }

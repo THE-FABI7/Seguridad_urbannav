@@ -9,3 +9,4 @@ export * from './recuperar-clave.model';
 export * from './permisos-rol-menu.model';
 export * from './pqrs.model';
 export * from './variables-general-del-sistema.model';
+export * from './hash-validacion-usuario.model';
