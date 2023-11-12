@@ -17,4 +17,8 @@ export namespace configuracionNotificaciones {
   export const asuntoVerificacionCorre = 'Verificate para seguir';
 
   export const claveAsignada = 'Esta es tu clave asignada';
+
+  export const confirmacionpqrs = 'se ha confirmado su pqrs'
+
+  export const pqrsRecibido = 'se ha registrado un nuevo pqrs'
 }

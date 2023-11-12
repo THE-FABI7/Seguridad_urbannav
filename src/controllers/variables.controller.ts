@@ -29,6 +29,13 @@ export class VariablesController {
     public variablesGeneralDelSistemaRepository: VariablesGeneralDelSistemaRepository,
   ) {}
 
+  @authenticate({
+    strategy: 'auth',
+    options: [
+      configuracionSeguridad.menuAdministradorId,
+      configuracionSeguridad.guardarAccion,
+    ],
+  })
   @post('/variables-general-del-sistemas')
   @response(200, {
     description: 'VariablesGeneralDelSistema model instance',
@@ -38,9 +45,6 @@ export class VariablesController {
       },
     },
   })
-  // @authorize({
-  //   allowedRoles: ['administrador'], // Definir el rol permitido sonaio
-  // })
   async create(
     @requestBody({
       content: {
@@ -94,7 +98,7 @@ export class VariablesController {
   @authenticate({
     strategy: 'auth',
     options: [
-      configuracionSeguridad.menuUsuarioId,
+      configuracionSeguridad.menuAdministradorId,
       configuracionSeguridad.listarAccion,
     ],
   })
