@@ -7,13 +7,13 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
   response,
 } from '@loopback/rest';
@@ -23,8 +23,8 @@ import {MenuRepository} from '../repositories';
 export class MenuController {
   constructor(
     @repository(MenuRepository)
-    public menuRepository : MenuRepository,
-  ) {}
+    public menuRepository: MenuRepository,
+  ) { }
 
   @post('/menu')
   @response(200, {

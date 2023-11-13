@@ -20,10 +20,10 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import {UserProfile} from '@loopback/security';
 import {configuracionNotificaciones} from '../config/notificaciones.config';
 import {configuracionSeguridad} from '../config/seguridad.config';
 import {
-  Credenciales,
   FactorDeAutenticacionPorCodigo,
   HashValidacionUsuario,
   Login,
@@ -31,13 +31,14 @@ import {
   RecuperarClave,
   Usuario,
 } from '../models';
+import {CambioClave} from '../models/cambio-clave.model';
+import {Credenciales} from '../models/credenciales.model';
 import {LoginRepository, UsuarioRepository} from '../repositories';
 import {
   AuthService,
   NotificacionesService,
   SeguridadUsuarioService,
 } from '../services';
-import {UserProfile} from '@loopback/security';
 
 export class UsuarioController {
   constructor(
@@ -51,7 +52,7 @@ export class UsuarioController {
     public servicioNotificaciones: NotificacionesService,
     @service(AuthService)
     private servicioAuth: AuthService,
-  ) {}
+  ) { }
 
   @post('/usuario')
   @response(200, {
@@ -487,4 +488,82 @@ del usuario. */
     return false;
   }
 
+  /* El método `cambiarClave` es un endpoint POST que permite al usuario
+cambiar su contraseña. Se necesita un cuerpo de solicitud que contiene el
+modelo `CambioClave`, que representa la dirección de correo electrónico del
+usuario, su contraseña actual y la contraseña nueva. */
+  @patch('/cambiar-clave')
+  @response(200, {
+    description: 'Usuario model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
+  })
+  async cambiarClave(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(CambioClave, {partial: true}),
+        },
+      },
+    })
+    cambioClave: CambioClave,
+  ): Promise<object> {
+    const credenciales = {
+      correo: cambioClave.correo,
+      clave: cambioClave.claveActual,
+    };
+
+    //Cifrar la clave ingresada por el usuario.
+    credenciales.clave = this.servicioSeguridad.cifrarTexto(credenciales.clave);
+
+    // Buscar al usuario que corresponda con las credenciales ingresadas.
+    const usuario = await this.usuarioRepository.findOne({
+      where: {
+        correo: credenciales.correo,
+        Clave: credenciales.clave,
+      },
+    });
+
+    // Verificar si el usuario existe.
+    if (!usuario) {
+      throw new HttpErrors.NotFound('Usuario no encontrado');
+    }
+
+    // Verificar si la contraseña actual es correcta utilizando la función identificarUsuario
+    const credenciales2: Credenciales = credenciales as unknown as Credenciales;
+    let usuarioAutenticado = await this.servicioSeguridad.identificarUsuario(credenciales2);
+
+    if (!usuarioAutenticado) {
+      throw new HttpErrors[401]('Contraseña actual incorrecta');
+    }
+
+    // Asignar la contraseña nueva y actualizar el usuario.
+    let nuevaClave = cambioClave.claveNueva;
+    let nuevaClaveCifrada = this.servicioSeguridad.cifrarTexto(nuevaClave);
+    usuario.Clave = nuevaClaveCifrada;
+    await this.usuarioRepository.updateById(usuario.getId(), usuario);
+
+    // Enviar la nueva clave al usuario
+    try {
+      let datos = {
+        numeroDestino: usuario.Telefono,
+        contenidoMensaje: `Hola ${usuario.Nombre}, Su nueva clave es: ${nuevaClave}`,
+      };
+      console.log(datos);
+
+      let url = configuracionNotificaciones.urlNotificacionSms;
+      try {
+        this.servicioNotificaciones.EnviarNotificacion(datos, url);
+      } catch (error) {
+        console.log(error);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    return usuario;
+  }
 }
+
+
+
+
+
