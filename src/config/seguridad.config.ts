@@ -1,6 +1,7 @@
 export namespace configuracionSeguridad {
   export const clavejwt = 'Admin@2023'
   export const menuUsuarioId = "651629d3a4193227b44609e0";
+  export const menuAdministradorId = '65512a334625ae14fc92f29e'
   export const listarAccion = "listar";
   export const guardarAccion = "guardar";
   export const eliminarAccion = "eliminar";

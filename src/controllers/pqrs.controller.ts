@@ -51,7 +51,7 @@ export class PqrsController {
       }
       let correoAdministrador = variables[0].CorreoContactoAdministrador;
       let nombreAdministrador = variables[0].NombreContactoAdministrador;
-      let asunto = 'Contacto desde sitio web';
+      let asunto = configuracionNotificaciones.pqrsRecibido;
       let mensaje = `Estimado ${nombreAdministrador}, se ha enviado un mensaje desde el sitio web con la siguiente informacion:\n
       Nombre: ${datos.nombreCompleto} \n
       Correo: ${datos.correo} \n
@@ -83,7 +83,7 @@ export class PqrsController {
       let datosContactoUsuario = {
         correoDestino: datos.correo,
         nombreDestino: datos.nombreCompleto,
-        asuntoCorreo: "Registro PQRS exitoso",
+        asuntoCorreo: configuracionNotificaciones.confirmacionpqrs,
         contenidoCorreo: mensajeUsuario,
       };
 
