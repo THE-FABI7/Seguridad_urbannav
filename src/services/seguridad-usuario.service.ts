@@ -142,4 +142,15 @@ export class SeguridadUsuarioService {
     });
     return menu;
   }
+
+  //necesito un metodo que dado un correo, me busque en la base de datos, si el correo esta en la base me muestre un error
+  //si el correo no esta en la base me permita crear un usuario nuevo
+  async buscarUsuarioPorCorreo(correo: string): Promise<Usuario | null> {
+    let usuario = await this.repositoriUsuario.findOne({
+      where: {
+        correo: correo,
+      },
+    });
+    return usuario as Usuario;
+  }
 }

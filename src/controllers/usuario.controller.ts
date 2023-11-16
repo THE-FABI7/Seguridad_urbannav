@@ -52,7 +52,7 @@ export class UsuarioController {
     public servicioNotificaciones: NotificacionesService,
     @service(AuthService)
     private servicioAuth: AuthService,
-  ) { }
+  ) {}
 
   @post('/usuario')
   @response(200, {
@@ -401,7 +401,6 @@ del usuario. */
     return new HttpErrors[401]('credenciales incorrectas');
   }
 
-
   @post('/usuario-publico')
   @response(200, {
     description: 'Usuario model instance',
@@ -420,6 +419,13 @@ del usuario. */
     })
     usuario: Omit<Usuario, '_id'>,
   ): Promise<Usuario> {
+    //quiero llamar a el servicio de seguridad al metodo buscarUsuarioPorCorreo que verifica si el correo esta en la base de datos
+    let usuarioExiste = await this.servicioSeguridad.buscarUsuarioPorCorreo(
+      usuario.correo,
+    );
+    if (usuarioExiste) {
+      throw new HttpErrors[401]('Usuario ya existe');
+    }
     // crear la clave
     let clave = this.servicioSeguridad.GeneralTextoAleatorio(10);
     console.log(clave);
@@ -434,12 +440,11 @@ del usuario. */
     usuario.aceptado = false;
     usuario.rolId = configuracionSeguridad.rolUsuarioPublico;
 
-
     // Notificación del hash
     let enlace = `<a href="${configuracionNotificaciones.urlValidacionCorreoFrontend}/${hash}" target='_blank'>Validar</a>`;
     let datos = {
       correoDestino: usuario.correo,
-      nombreDestino: usuario.Nombre + " " + usuario.Apellido,
+      nombreDestino: usuario.Nombre + ' ' + usuario.Apellido,
       contenidoCorreo: `Por favor visite este link para validar su correo: ${enlace}`,
       asuntoCorreo: configuracionNotificaciones.asuntoVerificacionCorre,
     };
@@ -449,16 +454,14 @@ del usuario. */
     // Envío de clave
     let datosCorreo = {
       correoDestino: usuario.correo,
-      nombreDestino: usuario.Nombre + " " + usuario.Apellido,
+      nombreDestino: usuario.Nombre + ' ' + usuario.Apellido,
       contenidoCorreo: `Su clave asignada es: ${clave}`,
       asuntoCorreo: configuracionNotificaciones.claveAsignada,
     };
     this.servicioNotificaciones.EnviarNotificacion(datosCorreo, url);
     // enviar correo electrónico de notificación
     return this.usuarioRepository.create(usuario);
-
   }
-
 
   @post('/validar-hash-usuario')
   @response(200, {
@@ -477,14 +480,110 @@ del usuario. */
     let usuario = await this.usuarioRepository.findOne({
       where: {
         hashValidacion: hash.codigoHash,
-        estadoValidacion: false
-      }
+        estadoValidacion: false,
+      },
     });
     if (usuario) {
       usuario.estadoValidacion = true;
       this.usuarioRepository.replaceById(usuario._id, usuario);
       return true;
     }
+    return false;
+  }
+
+  @post('/conductor-publico')
+  @response(200, {
+    description: 'Usuario model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Usuario)}},
+  })
+  async creacionconductorPublica(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Usuario, {
+            title: 'NewUsuario',
+            exclude: ['_id'],
+          }),
+        },
+      },
+    })
+    usuario: Omit<Usuario, '_id'>,
+  ): Promise<Usuario> {
+    //quiero llamar a el servicio de seguridad al metodo buscarUsuarioPorCorreo que verifica si el correo esta en la base de datos
+    let usuarioExiste = await this.servicioSeguridad.buscarUsuarioPorCorreo(
+      usuario.correo,
+    );
+    if (usuarioExiste) {
+      throw new HttpErrors[401]('Usuario ya existe');
+    }
+    // crear la clave
+    let clave = this.servicioSeguridad.GeneralTextoAleatorio(10);
+    console.log(clave);
+    // cifrar la clave
+    let claveCifrada = this.servicioSeguridad.cifrarTexto(clave);
+    // asignar la clave cifrada al usuario
+    usuario.Clave = claveCifrada;
+    // hash de validación de correo
+    let hash = this.servicioSeguridad.GeneralTextoAleatorio(100);
+    usuario.hashValidacion = hash;
+    usuario.estadoValidacion = false;
+    usuario.aceptado = false;
+    usuario.rolId = configuracionSeguridad.rolConductor;
+
+    // Notificación del hash
+    let enlace = `<a href="${configuracionNotificaciones.urlValidacionCorreoFrontend}/${hash}" target='_blank'>Validar</a>`;
+    let datos = {
+      correoDestino: usuario.correo,
+      nombreDestino: usuario.Nombre + ' ' + usuario.Apellido,
+      contenidoCorreo: `Por favor visite este link para validar su correo no obstante /n
+      usred quedara en seguimiento para ser aceptado: ${enlace}`,
+      asuntoCorreo: configuracionNotificaciones.asuntoVerificacionCorre,
+    };
+    let url = configuracionNotificaciones.url2fa;
+    this.servicioNotificaciones.EnviarNotificacion(datos, url);
+
+    // Envío de clave
+    let datosCorreo = {
+      correoDestino: usuario.correo,
+      nombreDestino: usuario.Nombre + ' ' + usuario.Apellido,
+      contenidoCorreo: `Su clave asignada es: ${clave}`,
+      asuntoCorreo: configuracionNotificaciones.claveAsignada,
+    };
+    this.servicioNotificaciones.EnviarNotificacion(datosCorreo, url);
+    // enviar correo electrónico de notificación
+    return this.usuarioRepository.create(usuario);
+  }
+
+  @post('/validar-hash-usuario')
+  @response(200, {
+    description: 'Validar hash',
+  })
+  async ValidarHashConductor(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(HashValidacionUsuario, {}),
+        },
+      },
+    })
+    hash: HashValidacionUsuario,
+  ): Promise<boolean> {
+    let usuario = await this.usuarioRepository.findOne({
+      where: {
+        hashValidacion: hash.codigoHash,
+        estadoValidacion: false,
+      },
+    });
+    if (usuario) {
+      usuario.estadoValidacion = true;
+      usuario.aceptado = true;
+      this.usuarioRepository.replaceById(usuario._id, usuario);
+      return true;
+    }
+
+    //hacer un post con el servicio de logica de negocio para registrarlo alla
+    
+
     return false;
   }
 
@@ -530,7 +629,8 @@ usuario, su contraseña actual y la contraseña nueva. */
 
     // Verificar si la contraseña actual es correcta utilizando la función identificarUsuario
     const credenciales2: Credenciales = credenciales as unknown as Credenciales;
-    let usuarioAutenticado = await this.servicioSeguridad.identificarUsuario(credenciales2);
+    let usuarioAutenticado =
+      await this.servicioSeguridad.identificarUsuario(credenciales2);
 
     if (!usuarioAutenticado) {
       throw new HttpErrors[401]('Contraseña actual incorrecta');
@@ -562,8 +662,3 @@ usuario, su contraseña actual y la contraseña nueva. */
     return usuario;
   }
 }
-
-
-
-
-
