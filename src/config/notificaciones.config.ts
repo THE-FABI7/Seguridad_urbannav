@@ -5,6 +5,8 @@ export namespace configuracionNotificaciones {
   export const codigo2fa: string = 'Codigo de verificacion URBANNAV';
   export const url2fa: string =
     'http://localhost:5178/Notificaciones/enviar-correo-2fa';
+  export const HashValidacionUsuario: string =
+    'http://localhost:5178/Notificaciones/hash-validacion-usuario';
   export const urlNotificacionSms: string =
     'http://localhost:5178/Notificaciones/enviar-sms';
   //cambiar el apuntador, ya que falta el de correo de contacto

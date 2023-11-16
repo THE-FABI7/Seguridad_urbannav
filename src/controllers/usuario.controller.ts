@@ -52,7 +52,7 @@ export class UsuarioController {
     public servicioNotificaciones: NotificacionesService,
     @service(AuthService)
     private servicioAuth: AuthService,
-  ) {}
+  ) { }
 
   @post('/usuario')
   @response(200, {
@@ -419,13 +419,6 @@ del usuario. */
     })
     usuario: Omit<Usuario, '_id'>,
   ): Promise<Usuario> {
-    //quiero llamar a el servicio de seguridad al metodo buscarUsuarioPorCorreo que verifica si el correo esta en la base de datos
-    let usuarioExiste = await this.servicioSeguridad.buscarUsuarioPorCorreo(
-      usuario.correo,
-    );
-    if (usuarioExiste) {
-      throw new HttpErrors[401]('Usuario ya existe');
-    }
     // crear la clave
     let clave = this.servicioSeguridad.GeneralTextoAleatorio(10);
     console.log(clave);
@@ -440,27 +433,30 @@ del usuario. */
     usuario.aceptado = false;
     usuario.rolId = configuracionSeguridad.rolUsuarioPublico;
 
+
     // Notificación del hash
-    let enlace = `<a href="${configuracionNotificaciones.urlValidacionCorreoFrontend}/${hash}" target='_blank'>Validar</a>`;
+    let enlace = configuracionNotificaciones.urlValidacionCorreoFrontend + "/" + hash;
     let datos = {
       correoDestino: usuario.correo,
-      nombreDestino: usuario.Nombre + ' ' + usuario.Apellido,
-      contenidoCorreo: `Por favor visite este link para validar su correo: ${enlace}`,
+      nombreDestino: usuario.Nombre + " " + usuario.Apellido,
+      contenidoCorreo: enlace,
       asuntoCorreo: configuracionNotificaciones.asuntoVerificacionCorre,
     };
-    let url = configuracionNotificaciones.url2fa;
+    let url = configuracionNotificaciones.HashValidacionUsuario;
     this.servicioNotificaciones.EnviarNotificacion(datos, url);
 
     // Envío de clave
-    let datosCorreo = {
+    datos = {
       correoDestino: usuario.correo,
-      nombreDestino: usuario.Nombre + ' ' + usuario.Apellido,
-      contenidoCorreo: `Su clave asignada es: ${clave}`,
+      nombreDestino: usuario.Nombre + " " + usuario.Apellido,
+      contenidoCorreo: clave,
       asuntoCorreo: configuracionNotificaciones.claveAsignada,
     };
-    this.servicioNotificaciones.EnviarNotificacion(datosCorreo, url);
+    url = configuracionNotificaciones.url2fa;
+    this.servicioNotificaciones.EnviarNotificacion(datos, url);
     // enviar correo electrónico de notificación
     return this.usuarioRepository.create(usuario);
+
   }
 
   @post('/validar-hash-usuario')
@@ -582,7 +578,7 @@ del usuario. */
     }
 
     //hacer un post con el servicio de logica de negocio para registrarlo alla
-    
+
 
     return false;
   }
