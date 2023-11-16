@@ -11,7 +11,7 @@ export namespace configuracionNotificaciones {
     'http://localhost:5178/Notificaciones/enviar-sms';
   //cambiar el apuntador, ya que falta el de correo de contacto
   export const urlFormularioContacto: string =
-    'http://localhost:5178/Notificaciones/enviar-correo-2fa';
+    'http://localhost:5178/Notificaciones/enviar-correo-PQRS';
 
   export const urlValidacionCorreoFrontend: string =
     'http://localhost:4200/seguridad/validar-hash-usuario-publico';

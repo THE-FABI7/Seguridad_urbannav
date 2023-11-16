@@ -63,16 +63,16 @@ export class PqrsController {
       equipo tecnico.
       `;
 
-      let mensajeUsuario = `Estimado ${datos.nombreCompleto}, se ha registrado tu PQRS desde el sitio web con la siguiente informacion:\n
-      Nombre: ${datos.nombreCompleto} \n
-      Correo: ${datos.correo} \n
-      Celular: ${datos.celular} \n
-      Tipo de mensaje: ${datos.tipoMensaje} \n
-      texto del mensaje: ${datos.mensaje} \n
+      let mensajeUsuario: string = `Estimado ${datos.nombreCompleto}, se ha registrado tu PQRS desde el sitio web con la siguiente información:\n
+          Nombre: ${datos.nombreCompleto}, \n
+          Correo: ${datos.correo}, \n
+          Celular: ${datos.celular}, \n
+          Tipo de mensaje: ${datos.tipoMensaje}, \n
+          Texto del mensaje: ${datos.mensaje}. \n
 
-      hasta pronto,\n
-      equipo tecnico.
-      `;
+          Hasta pronto,\n
+          Equipo técnico.
+`;
       let datosContacto = {
         correoDestino: correoAdministrador,
         nombreDestino: nombreAdministrador,
